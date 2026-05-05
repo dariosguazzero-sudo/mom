@@ -464,7 +464,7 @@ function buildActiveOverlay(t) {
       <!-- Sticky bottom bar -->
       <div style="position:fixed;bottom:0;left:0;right:0;width:100%;max-width:480px;margin:0 auto;
                   background:white;border-top:1px solid rgba(0,0,0,0.05);
-                  height:calc(15px + env(safe-area-inset-bottom));z-index:60;
+                  height:25px;z-index:60;
                   display:flex;align-items:center;justify-content:center">
       </div>
 
