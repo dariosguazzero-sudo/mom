@@ -107,8 +107,7 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-top: 0;
-  /* Removed env(safe-area-inset-top) to avoid gaps above headers */
-  padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
 .screen.hidden {
@@ -146,7 +145,7 @@ body {
   right: 0;
   max-width: 480px;
   margin: 0 auto;
-  height: calc(110px + env(safe-area-inset-bottom));
+  height: calc(70px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
   border-top: 1px solid rgba(0, 0, 0, 0.14);
@@ -184,13 +183,13 @@ body {
 }
 
 .tab.active {
-  color: var(--accent);
+  color: var(--purple);
 }
 
 .tab.active .avatar-pill {
-  background: rgba(91, 79, 207, 0.16);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: rgba(61, 43, 142, 0.16);
+  border-color: var(--purple);
+  color: var(--purple);
 }
 
 .tab .avatar-pill {
@@ -208,8 +207,8 @@ body {
 }
 
 .tab.active .avatar-pill {
-  color: var(--accent);
-  background: rgba(61, 43, 142, 0.42);
+  color: var(--purple);
+  background: rgba(61, 43, 142, 0.2);
   font-weight: 500;
   border-radius: 50%;
   border: 1.5px solid currentColor;
@@ -826,8 +825,8 @@ body {
   background: white;
   border-radius: var(--r-md);
   border: 2px solid #E5E7EB;
-  padding: 14px 20px;
-  margin-bottom: 16px;
+  padding: 10px 20px;
+  margin-bottom: 12px;
   cursor: pointer;
 }
 
@@ -852,7 +851,7 @@ body {
 .tlc-divider {
   border: none;
   border-top: 1px solid #E5E7EB;
-  margin: 16px 0;
+  margin: 10px 0;
 }
 
 .tlc-row {
@@ -1233,6 +1232,15 @@ body {
 .qr-container canvas {
   width: 240px !important;
   height: 240px !important;
+}
+
+.active-ticket-card {
+  margin: 0 24px;
+}
+
+.active-ticket-card #qr-container canvas {
+  width: 200px !important;
+  height: 200px !important;
 }
 
 /* ─────────────── Wave strip ─────────────── */

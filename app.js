@@ -370,7 +370,7 @@ function buildActiveOverlay(t) {
       <!-- Sticky header -->
       <div class="overlay-header"
            style="position:sticky;top:0;z-index:50;
-                  padding-bottom:24px;background:var(--green)">
+                  padding-bottom:36px;background:var(--green)">
         <button class="btn-back" onclick="closeOverlay()">
           <i data-lucide="chevron-left" style="width:24px;height:24px"></i>
         </button>
@@ -389,7 +389,7 @@ function buildActiveOverlay(t) {
       <!-- Card container ABOVE the spinner (z-index: 10) -->
       <div id="ticket-card-wrap">
         <div class="overlay-content" id="ticket-scroll-content">
-          <div class="detail-card">
+          <div class="detail-card active-ticket-card">
 
             <!-- ASF logo (tap to terminate — dev shortcut) -->
             <div style="margin-left:28px;margin-bottom:12px;cursor:pointer"
@@ -401,16 +401,16 @@ function buildActiveOverlay(t) {
             <!-- QR / validation section -->
             <div class="validation-section" style="border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0">
               <div class="validation-header" onclick="toggleValidation(this)"
-                   style="padding-top:24px;padding-bottom:24px">
-                <img src="FOTO/logos/biglietti_tariffa.png" style="width:32px;height:32px;object-fit:contain;margin-right:12px">
-                <span style="color:var(--text);font-weight:600;font-size:1rem">Controllo e validazione</span>
+                   style="padding-top:20px;padding-bottom:20px">
+                <img src="FOTO/logos/biglietti_tariffa.png" style="width:28px;height:28px;object-fit:contain;margin-right:12px">
+                <span style="color:var(--text);font-weight:600;font-size:0.9375rem">Controllo e validazione</span>
                 <i data-lucide="chevron-up" class="val-chevron"
                    style="width:32px;height:32px;margin-left:auto;color:var(--teal);transition:transform 0.3s"></i>
               </div>
               <div class="validation-body" style="overflow:hidden;transition:max-height 0.3s ease;max-height:500px">
-                <div class="qr-wrap">
+                <div class="qr-wrap" style="padding-top: 12px; padding-bottom: 8px;">
                   <div id="qr-container"></div>
-                  <button class="qr-enlarge" onclick="openQRModal('${t.ticketCode}')">Ingrandisci QRCode</button>
+                  <button class="qr-enlarge" style="margin-top:8px" onclick="openQRModal('${t.ticketCode}')">Ingrandisci QRCode</button>
                 </div>
                 <div class="qr-footer">
                   <span class="qr-clock">
@@ -464,7 +464,7 @@ function buildActiveOverlay(t) {
       <!-- Sticky bottom bar -->
       <div style="position:fixed;bottom:0;left:0;right:0;width:100%;max-width:480px;margin:0 auto;
                   background:white;border-top:1px solid rgba(0,0,0,0.05);
-                  height:calc(55px + env(safe-area-inset-bottom));z-index:60;
+                  height:calc(30px + env(safe-area-inset-bottom));z-index:60;
                   display:flex;align-items:center;justify-content:center">
       </div>
 
