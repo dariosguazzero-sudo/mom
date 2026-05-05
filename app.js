@@ -461,13 +461,7 @@ function buildActiveOverlay(t) {
         </div>
       </div><!-- /ticket-card-wrap -->
 
-      <!-- Sticky bottom bar -->
-      <div style="position:fixed;bottom:0;left:0;right:0;width:100%;max-width:480px;margin:0 auto;
-                  background:white;border-top:1px solid rgba(0,0,0,0.05);
-                  height:25px;z-index:60;
-                  display:flex;align-items:center;justify-content:center;
-                  padding-bottom:0px !important;margin-bottom:0px !important;">
-      </div>
+      <!-- Sticky bottom bar removed to eliminate white gap -->
 
     </div>`;
 }

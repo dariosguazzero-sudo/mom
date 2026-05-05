@@ -114,7 +114,7 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-top: 0;
-  padding-bottom: 80px;
+  padding-bottom: 55px;
 }
 
 .screen.hidden {
@@ -152,13 +152,12 @@ body {
   right: 0;
   max-width: 480px;
   margin: 0 auto;
-  height: 75px;
+  height: 55px;
   background: var(--surface);
   border-top: 1px solid rgba(0, 0, 0, 0.14);
   display: flex;
-  align-items: flex-start;
-  padding-top: 8px;
-  padding-bottom: 0px !important;
+  align-items: center;
+  padding: 0 !important;
   z-index: 110;
 }
 
@@ -1136,8 +1135,7 @@ body {
 .overlay-active {
   background: var(--green);
   min-height: 100dvh;
-  height: 100dvh;
-  padding-bottom: 0px !important;
+  padding-bottom: 30px;
   position: relative;
   overflow: visible;
   overscroll-behavior: contain;
@@ -1243,15 +1241,12 @@ body {
 }
 
 .active-ticket-card {
-  margin: 0 16px 80px;
-  border-radius: 12px;
-  margin-bottom: 80px !important;
-  padding-bottom: 0px !important;
+  margin: 0 var(--s4);
 }
 
 .active-ticket-card #qr-container canvas {
-  width: 200px !important;
-  height: 200px !important;
+  width: 240px !important;
+  height: 240px !important;
 }
 
 /* ─────────────── Wave strip ─────────────── */
