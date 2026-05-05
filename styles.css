@@ -145,7 +145,6 @@ body {
   right: 0;
   max-width: 480px;
   margin: 0 auto;
-  height: calc(55px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
   border-top: 1px solid rgba(0, 0, 0, 0.14);
@@ -1129,7 +1128,7 @@ body {
   background: var(--green);
   min-height: 100%;
   height: auto;
-  padding-bottom: calc(45px + env(safe-area-inset-bottom));
+  padding-bottom: calc(75px + env(safe-area-inset-bottom));
   position: relative;
   overflow: visible;
   overscroll-behavior: contain;
@@ -1235,7 +1234,7 @@ body {
 }
 
 .active-ticket-card {
-  margin: 0 16px;
+  margin: 0 16px calc(75px + env(safe-area-inset-bottom));
   border-radius: 12px;
 }
 
