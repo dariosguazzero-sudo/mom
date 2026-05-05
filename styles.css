@@ -41,6 +41,8 @@
   /* Shadows */
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07), 0 0 1px rgba(0, 0, 0, 0.05);
   --shadow-up: 0 -4px 24px rgba(0, 0, 0, 0.10);
+  
+  --safe-area-bottom: 0px;
 }
 
 /* ─────────────── Reset ─────────────── */
@@ -59,6 +61,10 @@ html {
 html,
 body {
   height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-bottom: 0px !important;
+  margin-bottom: 0px !important;
   overflow: hidden;
   -webkit-text-size-adjust: none;
   overscroll-behavior-y: none;
@@ -93,11 +99,12 @@ body {
 #app {
   width: min(100vw, 30rem);
   max-width: 30rem;
-  height: 100%;
+  height: 100dvh;
   margin: 0 auto;
   background: var(--bg);
   position: relative;
   overflow: hidden;
+  padding-bottom: 0px !important;
 }
 
 /* ─────────────── Screens ─────────────── */
@@ -151,6 +158,7 @@ body {
   display: flex;
   align-items: flex-start;
   padding-top: 8px;
+  padding-bottom: 0px !important;
   z-index: 110;
 }
 
@@ -1127,9 +1135,9 @@ body {
 /* ─────────────── Overlay Active ─────────────── */
 .overlay-active {
   background: var(--green);
-  min-height: 100%;
-  height: auto;
-  padding-bottom: 40px;
+  min-height: 100dvh;
+  height: 100dvh;
+  padding-bottom: 0px !important;
   position: relative;
   overflow: visible;
   overscroll-behavior: contain;
@@ -1235,8 +1243,10 @@ body {
 }
 
 .active-ticket-card {
-  margin: 0 16px 40px;
+  margin: 0 16px 80px;
   border-radius: 12px;
+  margin-bottom: 80px !important;
+  padding-bottom: 0px !important;
 }
 
 .active-ticket-card #qr-container canvas {

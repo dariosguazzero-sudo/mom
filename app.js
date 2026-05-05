@@ -465,7 +465,8 @@ function buildActiveOverlay(t) {
       <div style="position:fixed;bottom:0;left:0;right:0;width:100%;max-width:480px;margin:0 auto;
                   background:white;border-top:1px solid rgba(0,0,0,0.05);
                   height:25px;z-index:60;
-                  display:flex;align-items:center;justify-content:center">
+                  display:flex;align-items:center;justify-content:center;
+                  padding-bottom:0px !important;margin-bottom:0px !important;">
       </div>
 
     </div>`;
@@ -774,9 +775,36 @@ function initTicketPullToRefresh() {
   });
 }
 
+/* ─────────────── Layout Fixes (iOS Safe Area overrides) ─────────────── */
+function applyLayoutFixes() {
+  document.body.style.paddingBottom = '0px';
+  document.body.style.marginBottom = '0px';
+  document.documentElement.style.paddingBottom = '0px';
+  
+  const bottomNav = document.querySelector('#bottom-nav');
+  if (bottomNav) bottomNav.style.paddingBottom = '0px';
+  
+  document.querySelectorAll('.overlay-active, .ticket-active, [class*="ticket"]').forEach(el => {
+    el.style.paddingBottom = '0px';
+  });
+  
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.style.paddingBottom = '0px';
+}
+
+window.addEventListener('resize', applyLayoutFixes);
+
+document.body.addEventListener('touchmove', function(e) {
+  // Prevent bounce effects on the body itself
+  if (e.target === document.body || e.target.id === 'app') {
+    e.preventDefault();
+  }
+}, { passive: false });
+
 /* ─────────────── Initialisation ─────────────── */
 
 window.addEventListener('DOMContentLoaded', () => {
+  applyLayoutFixes();
   lucide.createIcons();
 
   // Wire up bottom nav tabs
