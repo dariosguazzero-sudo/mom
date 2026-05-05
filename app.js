@@ -321,7 +321,7 @@ function closeOverlay() {
 function buildInactiveOverlay(t) {
   return `
     <div class="overlay-inactive">
-      <div class="overlay-header" style="padding-top:calc(58px + env(safe-area-inset-top));padding-bottom:48px">
+      <div class="overlay-header" style="padding-bottom:48px">
         <button class="btn-back" style="color:#000" onclick="closeOverlay()">
           <i data-lucide="chevron-left" style="width:24px;height:24px"></i>
         </button>
@@ -369,8 +369,7 @@ function buildActiveOverlay(t) {
 
       <!-- Sticky header -->
       <div class="overlay-header"
-           style="position:relative;z-index:11;
-                  padding-top:calc(58px + env(safe-area-inset-top));
+           style="position:sticky;top:0;z-index:50;
                   padding-bottom:24px;background:var(--green)">
         <button class="btn-back" onclick="closeOverlay()">
           <i data-lucide="chevron-left" style="width:24px;height:24px"></i>
@@ -465,7 +464,7 @@ function buildActiveOverlay(t) {
       <!-- Sticky bottom bar -->
       <div style="position:fixed;bottom:0;left:0;right:0;width:100%;max-width:480px;margin:0 auto;
                   background:white;border-top:1px solid rgba(0,0,0,0.05);
-                  height:calc(110px + env(safe-area-inset-bottom));z-index:60;
+                  height:calc(55px + env(safe-area-inset-bottom));z-index:60;
                   display:flex;align-items:center;justify-content:center">
       </div>
 
@@ -477,11 +476,11 @@ function buildActiveOverlay(t) {
 function toggleAccordion(el) {
   const body   = el.nextElementSibling;
   const isOpen = body.classList.toggle('open');
-  const link   = el.querySelector('.accordion-link');
-  link.innerHTML = isOpen
-    ? 'Leggi tutto <i data-lucide="chevron-up"   style="width:28px;height:28px;flex-shrink:0;color:var(--teal)"></i>'
-    : 'Leggi tutto <i data-lucide="chevron-down" style="width:28px;height:28px;flex-shrink:0;color:var(--teal)"></i>';
-  lucide.createIcons();
+  const icon   = el.querySelector('.accordion-link svg, .accordion-link i');
+  if (icon) {
+    icon.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    icon.style.transition = 'transform 0.3s ease';
+  }
 }
 
 function toggleValidation(el) {
