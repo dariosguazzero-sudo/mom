@@ -9,6 +9,7 @@ const state = {
   currentScreen:  'home',
   activeOverlayId: null,
   activeTicketPullCleanup: null,
+  acquistiPullCleanup: null,
   acquistiTab:    'disponibili',
 };
 
@@ -382,7 +383,7 @@ function buildActiveOverlay(t) {
 
       <!-- Spinner area BEHIND the card (z-index: 1) -->
       <div id="ticket-spinner-wrap">
-        <div class="lds-spinner white lds-spinner-lg is-spinning" id="ticket-lds-spinner">
+        <div class="lds-spinner black lds-spinner-lg is-spinning" id="ticket-lds-spinner">
           <div></div><div></div><div></div><div></div>
           <div></div><div></div><div></div><div></div>
         </div>
@@ -397,7 +398,7 @@ function buildActiveOverlay(t) {
             <div style="margin-left:28px;margin-bottom:12px;cursor:pointer"
                  onclick="terminateTicket('${t.id}')">${asfSVG(24)}</div>
 
-            <p class="detail-card__name">${t.name}</p>
+              <p class="detail-card__name active-ticket-name">${t.name}</p>
             <p class="detail-card__sub">${t.subtitle}</p>
 
             <!-- QR / validation section -->
@@ -405,7 +406,7 @@ function buildActiveOverlay(t) {
               <div class="validation-header" onclick="toggleValidation(this)"
                    style="padding-top:20px;padding-bottom:20px">
                 <img src="FOTO/logos/biglietti_tariffa.png" style="width:28px;height:28px;object-fit:contain;margin-right:12px">
-                <span style="color:var(--text);font-weight:600;font-size:0.9375rem">Controllo e validazione</span>
+                <span class="validation-title" style="color:var(--text)">Controllo e validazione</span>
                 <i data-lucide="chevron-up" class="val-chevron"
                    style="width:32px;height:32px;margin-left:auto;color:var(--teal);transition:transform 0.3s"></i>
               </div>
@@ -463,7 +464,7 @@ function buildActiveOverlay(t) {
         </div>
       </div><!-- /ticket-card-wrap -->
 
-      <!-- Sticky bottom bar removed to eliminate white gap -->
+      <div class="active-ticket-bottom-panel" aria-hidden="true"></div>
 
     </div>`;
 }
@@ -511,10 +512,12 @@ function openQRModal(ticketCode) {
         <line x1="6"  y1="6"  x2="18" y2="18"/>
       </svg>
     </button>
-    <div id="qr-modal-container"></div>`;
+    <div class="qr-modal__panel">
+      <div id="qr-modal-container"></div>
+    </div>`;
   document.body.appendChild(modal);
   new QRCode(document.getElementById('qr-modal-container'), {
-    text: ticketCode, width: 320, height: 320,
+    text: ticketCode, width: 200, height: 200,
     colorDark: '#000', colorLight: '#fff',
     correctLevel: QRCode.CorrectLevel.M,
   });
@@ -566,107 +569,114 @@ function triggerAcquistiEntrance() {
 
 /* ─────────────── Pull-to-refresh — Acquisti Screen ─────────────── */
 function initAcquistiPullToRefresh() {
+  if (state.acquistiPullCleanup) state.acquistiPullCleanup();
+
   const screen = document.getElementById('screen-acquisti');
   const pullZone = document.getElementById('acquisti-pull-zone');
   const body = document.getElementById('acquisti-body');
   if (!screen || !pullZone || !body) return;
 
   const spinner = pullZone.querySelector('.lds-spinner');
-  const spikes = spinner ? spinner.querySelectorAll('div') : [];
   let startY = 0;
-  let pulling = false;
-  let hitThreshold = false;
-  const MAX_PULL = 100;
-  const THRESHOLD = 60;
-
-  screen.addEventListener('touchstart', e => {
-    if (state.currentScreen !== 'acquisti' || state.activeOverlayId || screen.scrollTop > 0) return;
-    startY = e.touches[0].clientY;
-    pulling = true;
-    hitThreshold = false;
-    pullZone.style.transition = 'none';
-    body.style.transform = '';
-    body.style.transition = 'none';
-    if (spinner) {
-      spinner.classList.remove('is-spinning');
-      spinner.style.rotate = '';
-    }
-    // Reset spike opacity
-    spikes.forEach(s => s.style.opacity = '');
-  }, { passive: true });
-
+  let tracking = false;
+  let pullActive = false;
+  let pullDistance = 0;
   let pullRAF = null;
+  let spinnerStopTimer = null;
+  const MAX_PULL = 90;
+  const REFRESH_THRESHOLD = 55;
 
-  screen.addEventListener('touchmove', e => {
-    if (!pulling) return;
-    const delta = e.touches[0].clientY - startY;
-    if (delta <= 0) {
-      if (pullRAF) cancelAnimationFrame(pullRAF);
-      pulling = false;
-      pullZone.style.height = '0';
+  const finishPull = refresh => {
+    if (pullRAF) {
+      cancelAnimationFrame(pullRAF);
+      pullRAF = null;
+    }
+    tracking = false;
+    pullActive = false;
+    pullDistance = 0;
+    pullZone.style.transition = 'height 0.3s ease';
+
+    if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
+    if (refresh) {
+      pullZone.style.height = '72px';
+      if (spinner) spinner.classList.add('is-spinning');
+      spinnerStopTimer = window.setTimeout(() => {
+        renderAcquisti();
+        pullZone.style.height = '0';
+        spinnerStopTimer = window.setTimeout(() => {
+          if (spinner) spinner.classList.remove('is-spinning');
+          spinnerStopTimer = null;
+        }, 300);
+      }, 550);
       return;
     }
 
+    pullZone.style.height = '0';
+    spinnerStopTimer = window.setTimeout(() => {
+      if (spinner) spinner.classList.remove('is-spinning');
+      spinnerStopTimer = null;
+    }, 300);
+  };
+
+  const onStart = e => {
+    if (state.currentScreen !== 'acquisti' || state.activeOverlayId || screen.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    tracking = true;
+    pullActive = false;
+    pullDistance = 0;
+    if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
+    pullZone.style.transition = 'none';
+    if (spinner) spinner.classList.remove('is-spinning');
+  };
+
+  const onMove = e => {
+    if (!tracking) return;
+    const delta = e.touches[0].clientY - startY;
+    if (delta <= 0) {
+      // Upward gestures remain ordinary list scrolling.
+      tracking = false;
+      return;
+    }
+
+    if (screen.scrollTop > 1) {
+      tracking = false;
+      return;
+    }
+
+    // Intercept only a downward pull from the top of the list.
+    e.preventDefault();
+    pullActive = true;
+    pullDistance = Math.min(delta * 0.35, MAX_PULL);
+
     if (pullRAF) cancelAnimationFrame(pullRAF);
     pullRAF = requestAnimationFrame(() => {
-      const move = Math.min(delta * 0.35, MAX_PULL);
-      pullZone.style.height = move + 'px';
-      body.style.transform = '';
-      
-      if (move >= THRESHOLD) {
-        if (!hitThreshold) {
-          hitThreshold = true;
-          if (spinner) {
-            spinner.classList.add('is-spinning');
-            spikes.forEach(s => s.style.opacity = '');
-          }
-        }
-      } else {
-        if (hitThreshold) {
-          hitThreshold = false;
-          if (spinner) spinner.classList.remove('is-spinning');
-        }
-        // Spike-by-spike appearance
-        const offsetIndex = Math.floor((move / THRESHOLD) * spikes.length * 2) % spikes.length;
-        spikes.forEach((spike, i) => {
-          const dist = (i - offsetIndex + spikes.length) % spikes.length;
-          const op = Math.max(0.15, 1 - (dist / spikes.length));
-          spike.style.opacity = op;
-        });
-        // Slow rotation
-        if (spinner) spinner.style.rotate = `${move * 2}deg`;
-      }
+      pullZone.style.height = `${pullDistance}px`;
+      if (spinner) spinner.classList.add('is-spinning');
+      pullRAF = null;
     });
-  }, { passive: true });
+  };
 
-  screen.addEventListener('touchend', () => {
-    if (!pulling) return;
-    pulling = false;
-    
-    pullZone.style.transition = 'height 0.3s ease';
-    
-    if (parseInt(pullZone.style.height) > THRESHOLD) {
-      pullZone.style.height = '80px';
-      if (spinner) {
-        spinner.classList.add('is-spinning');
-        spikes.forEach(s => s.style.opacity = '');
-      }
-      
-      setTimeout(() => {
-        renderAcquisti();
-        pullZone.style.height = '0';
-        if (spinner) {
-          setTimeout(() => {
-            spinner.classList.remove('is-spinning');
-            spinner.style.rotate = '';
-          }, 300);
-        }
-      }, 800);
-    } else {
-      pullZone.style.height = '0';
-      if (spinner) spinner.style.rotate = '';
-    }
-  });
+  const onEnd = () => {
+    if (!tracking && !pullActive) return;
+    finishPull(pullActive && pullDistance >= REFRESH_THRESHOLD);
+  };
+
+  const onCancel = () => finishPull(false);
+
+  screen.addEventListener('touchstart', onStart, { passive: true });
+  screen.addEventListener('touchmove', onMove, { passive: false });
+  screen.addEventListener('touchend', onEnd);
+  screen.addEventListener('touchcancel', onCancel);
+
+  state.acquistiPullCleanup = () => {
+    screen.removeEventListener('touchstart', onStart);
+    screen.removeEventListener('touchmove', onMove);
+    screen.removeEventListener('touchend', onEnd);
+    screen.removeEventListener('touchcancel', onCancel);
+    if (pullRAF) cancelAnimationFrame(pullRAF);
+    if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
+    state.acquistiPullCleanup = null;
+  };
 }
 
 /* ─────────────── Pull-to-refresh — Active Ticket Overlay ─────────────── */
@@ -678,12 +688,17 @@ function initTicketPullToRefresh() {
   const spinnerWrap = document.getElementById('ticket-spinner-wrap');
   const spinner = document.getElementById('ticket-lds-spinner');
   if (!overlay || !cardWrap || !spinnerWrap || !spinner) return;
+  const activeCard = overlay.querySelector('.active-ticket-card');
+  if (!activeCard) return;
 
   let startY = 0;
   let pulling = false;
   let pullDistance = 0;
   let pullRAF = null;
   let spinnerStopTimer = null;
+  let bounceStartY = 0;
+  let bounceRAF = null;
+  let bottomBouncing = false;
   const SNAP_THRESHOLD = 110;
   const MAX_PULL = SNAP_THRESHOLD;
 
@@ -752,17 +767,64 @@ function initTicketPullToRefresh() {
     resetPull();
   };
 
+  const resetBottomBounce = () => {
+    if (bounceRAF) {
+      cancelAnimationFrame(bounceRAF);
+      bounceRAF = null;
+    }
+    if (!bottomBouncing) return;
+    bottomBouncing = false;
+    activeCard.style.transition = 'transform 0.28s cubic-bezier(0.25, 1, 0.5, 1)';
+    activeCard.style.transform = 'translate3d(0, 0, 0)';
+  };
+
+  const onBounceStart = e => {
+    bounceStartY = e.touches[0].clientY;
+  };
+
+  const onBounceMove = e => {
+    if (pulling) return;
+    const atBottom = overlay.scrollTop + overlay.clientHeight >= overlay.scrollHeight - 2;
+    const deltaY = e.touches[0].clientY - bounceStartY;
+    if (!atBottom || deltaY >= 0) {
+      resetBottomBounce();
+      return;
+    }
+
+    // Subtle, card-only bottom overscroll: the page itself never shifts.
+    e.preventDefault();
+    bottomBouncing = true;
+    const distance = Math.min(Math.abs(deltaY) * 0.08, 16);
+    activeCard.style.transition = 'none';
+    if (bounceRAF) cancelAnimationFrame(bounceRAF);
+    bounceRAF = requestAnimationFrame(() => {
+      activeCard.style.transform = `translate3d(0, -${distance}px, 0)`;
+      bounceRAF = null;
+    });
+  };
+
+  const onBounceEnd = () => resetBottomBounce();
+
   overlay.addEventListener('touchstart', onStart, { passive: true });
   overlay.addEventListener('touchmove', onMove, { passive: false });
   overlay.addEventListener('touchend', onEnd);
   overlay.addEventListener('touchcancel', onEnd);
+  overlay.addEventListener('touchstart', onBounceStart, { passive: true });
+  overlay.addEventListener('touchmove', onBounceMove, { passive: false });
+  overlay.addEventListener('touchend', onBounceEnd);
+  overlay.addEventListener('touchcancel', onBounceEnd);
 
   state.activeTicketPullCleanup = () => {
     overlay.removeEventListener('touchstart', onStart);
     overlay.removeEventListener('touchmove', onMove);
     overlay.removeEventListener('touchend', onEnd);
     overlay.removeEventListener('touchcancel', onEnd);
+    overlay.removeEventListener('touchstart', onBounceStart);
+    overlay.removeEventListener('touchmove', onBounceMove);
+    overlay.removeEventListener('touchend', onBounceEnd);
+    overlay.removeEventListener('touchcancel', onBounceEnd);
     if (pullRAF) cancelAnimationFrame(pullRAF);
+    if (bounceRAF) cancelAnimationFrame(bounceRAF);
     if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
     state.activeTicketPullCleanup = null;
   };
@@ -773,6 +835,7 @@ function syncVisualViewport() {
   const viewport = window.visualViewport;
   const height = Math.round(viewport ? viewport.height : window.innerHeight);
   document.documentElement.style.setProperty('--app-height', `${height}px`);
+  document.documentElement.style.setProperty('--active-ticket-bottom-panel-height', `${Math.round(height / 6)}px`);
 }
 
 window.addEventListener('resize', syncVisualViewport);
