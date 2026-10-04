@@ -831,15 +831,28 @@ function initTicketPullToRefresh() {
 }
 
 /* ─────────────── iOS visual viewport / safe area ─────────────── */
+const isStandalone = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches;
+
 function syncVisualViewport() {
-  const viewport = window.visualViewport;
-  const height = Math.round(viewport ? viewport.height : window.innerHeight);
-  document.documentElement.style.setProperty('--app-height', `${height}px`);
-  document.documentElement.style.setProperty('--active-ticket-bottom-panel-height', `${Math.round(height / 6)}px`);
+  // In iOS standalone, window.innerHeight is the most reliable measurement
+  // because visualViewport can sometimes return incorrect values
+  let height;
+  if (isStandalone) {
+    height = window.innerHeight;
+  } else {
+    const viewport = window.visualViewport;
+    height = viewport ? viewport.height : window.innerHeight;
+  }
+  height = Math.round(height);
+  document.documentElement.style.setProperty('--app-height', height + 'px');
+  document.documentElement.style.setProperty('--active-ticket-bottom-panel-height', Math.round(height / 6) + 'px');
 }
 
 window.addEventListener('resize', syncVisualViewport);
-window.addEventListener('orientationchange', syncVisualViewport);
+window.addEventListener('orientationchange', () => {
+  setTimeout(syncVisualViewport, 100);
+});
 if (window.visualViewport) window.visualViewport.addEventListener('resize', syncVisualViewport);
 
 document.body.addEventListener('touchmove', function(e) {
@@ -853,6 +866,9 @@ document.body.addEventListener('touchmove', function(e) {
 
 window.addEventListener('DOMContentLoaded', () => {
   syncVisualViewport();
+  // Re-sync shortly after to catch any late iOS layout shifts
+  setTimeout(syncVisualViewport, 50);
+  setTimeout(syncVisualViewport, 300);
   lucide.createIcons();
 
   // Wire up bottom nav tabs
