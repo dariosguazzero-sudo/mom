@@ -8,6 +8,7 @@ const state = {
   activeIntervals: {},
   currentScreen:  'home',
   activeOverlayId: null,
+  activeTicketPullCleanup: null,
   acquistiTab:    'disponibili',
 };
 
@@ -176,7 +177,7 @@ function renderAcquisti() {
     return;
   }
 
-  let html = '<div class="list-label">Ticket attivi</div>';
+  let html = '<div class="list-label">TICKET ATTIVI</div>';
   html += active.map(buildActiveListCard).join('');
   el.innerHTML = html;
   lucide.createIcons();
@@ -310,6 +311,7 @@ function openTicketDetail(id) {
 
 function closeOverlay() {
   document.getElementById('overlay-ticket').classList.add('hidden');
+  if (state.activeTicketPullCleanup) state.activeTicketPullCleanup();
   state.activeOverlayId = null;
   stopClockInterval();
 
@@ -370,7 +372,7 @@ function buildActiveOverlay(t) {
       <!-- Sticky header -->
       <div class="overlay-header"
            style="position:sticky;top:0;z-index:50;
-                  padding-bottom:36px;background:var(--green)">
+                  padding-bottom:36px;background:var(--active-ticket-green)">
         <button class="btn-back" onclick="closeOverlay()">
           <i data-lucide="chevron-left" style="width:24px;height:24px"></i>
         </button>
@@ -669,124 +671,113 @@ function initAcquistiPullToRefresh() {
 
 /* ─────────────── Pull-to-refresh — Active Ticket Overlay ─────────────── */
 function initTicketPullToRefresh() {
+  if (state.activeTicketPullCleanup) state.activeTicketPullCleanup();
+
   const overlay = document.getElementById('overlay-ticket');
   const cardWrap = document.getElementById('ticket-card-wrap');
   const spinnerWrap = document.getElementById('ticket-spinner-wrap');
   const spinner = document.getElementById('ticket-lds-spinner');
   if (!overlay || !cardWrap || !spinnerWrap || !spinner) return;
 
-  const spikes = spinner.querySelectorAll('div');
   let startY = 0;
   let pulling = false;
-  let hitThreshold = false;
-  const THRESHOLD = 80;
-  const MAX_PULL = 140;
+  let pullDistance = 0;
+  let pullRAF = null;
+  let spinnerStopTimer = null;
+  const SNAP_THRESHOLD = 110;
+  const MAX_PULL = SNAP_THRESHOLD;
 
-  overlay.addEventListener('touchstart', e => {
+  const resetPull = () => {
+    if (pullRAF) {
+      cancelAnimationFrame(pullRAF);
+      pullRAF = null;
+    }
+    pulling = false;
+    pullDistance = 0;
+    cardWrap.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+    spinnerWrap.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+    cardWrap.style.transform = 'translate3d(0, 0, 0)';
+    spinnerWrap.style.height = '0';
+    if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
+    spinnerStopTimer = window.setTimeout(() => {
+      spinner.classList.remove('is-spinning');
+      spinnerStopTimer = null;
+    }, 400);
+  };
+
+  const onStart = e => {
     if (overlay.scrollTop > 2) return;
     startY = e.touches[0].clientY;
     pulling = true;
-    hitThreshold = false;
+    if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
+    spinner.classList.remove('is-spinning');
     cardWrap.style.transition = 'none';
     spinnerWrap.style.transition = 'none';
-    spinner.classList.remove('is-spinning');
-    spinner.style.rotate = '';
-    // Reset spike opacity
-    spikes.forEach(s => s.style.opacity = '');
-  }, { passive: true });
+  };
 
-  overlay.addEventListener('touchmove', e => {
+  const onMove = e => {
     if (!pulling) return;
 
     const deltaY = e.touches[0].clientY - startY;
-
-    // Upward swipe = normal scroll, cancel pull
     if (deltaY <= 0) {
-      pulling = false;
-      cardWrap.style.transform = '';
-      spinnerWrap.style.height = '0';
-      spinner.classList.remove('is-spinning');
-      spinner.style.rotate = '';
-      spikes.forEach(s => s.style.opacity = '');
+      resetPull();
       return;
     }
 
-    // If scrolled down while pulling, cancel
     if (overlay.scrollTop > 2) {
-      pulling = false;
+      resetPull();
       return;
     }
 
+    // This is a controlled pull, never native iOS overscroll.
     e.preventDefault();
+    pullDistance = Math.min(deltaY * 0.35, MAX_PULL);
+    spinner.classList.add('is-spinning');
+    const currentDistance = pullDistance;
 
-    const move = Math.min(deltaY * 0.35, MAX_PULL);
-    cardWrap.style.transform = `translateY(${move}px)`;
-    spinnerWrap.style.height = move + 'px';
+    if (pullRAF) cancelAnimationFrame(pullRAF);
+    pullRAF = requestAnimationFrame(() => {
+      if (!pulling) return;
+      // Ticket transforms are strictly vertical, with no horizontal component.
+      cardWrap.style.transform = `translate3d(0, ${currentDistance}px, 0)`;
+      spinnerWrap.style.height = `${currentDistance}px`;
+      pullRAF = null;
 
-    if (move >= THRESHOLD) {
-      if (!hitThreshold) {
-        hitThreshold = true;
-        if (navigator.vibrate) navigator.vibrate(10);
-        spinner.classList.add('is-spinning');
-        spikes.forEach(s => s.style.opacity = '');
-      }
-    } else {
-      if (hitThreshold) {
-        hitThreshold = false;
-        spinner.classList.remove('is-spinning');
-      }
-      // Spike-by-spike appearance during pull
-      const offsetIndex = Math.floor((move / THRESHOLD) * spikes.length * 2) % spikes.length;
-      spikes.forEach((spike, i) => {
-        const dist = (i - offsetIndex + spikes.length) % spikes.length;
-        const op = Math.max(0.15, 1 - (dist / spikes.length));
-        spike.style.opacity = op;
-      });
+      // Hold the card at the capped pull distance; snap-back happens only on release.
+    });
+  };
 
-      // Keep scale fixed, only rotate
-      spinner.style.rotate = `${move * 1.5}deg`;
-    }
-  }, { passive: false });
-
-  overlay.addEventListener('touchend', () => {
+  const onEnd = () => {
     if (!pulling) return;
-    pulling = false;
+    resetPull();
+  };
 
-    // Add transition for snap-back
-    cardWrap.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-    spinnerWrap.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+  overlay.addEventListener('touchstart', onStart, { passive: true });
+  overlay.addEventListener('touchmove', onMove, { passive: false });
+  overlay.addEventListener('touchend', onEnd);
+  overlay.addEventListener('touchcancel', onEnd);
 
-    // Always snap back up
-    cardWrap.style.transform = 'translateY(0)';
-    spinnerWrap.style.height = '0';
-    spinner.style.rotate = '';
-    
-    // Stop spinner after snap animation
-    setTimeout(() => {
-      spinner.classList.remove('is-spinning');
-      spikes.forEach(s => s.style.opacity = '');
-    }, 400);
-  });
+  state.activeTicketPullCleanup = () => {
+    overlay.removeEventListener('touchstart', onStart);
+    overlay.removeEventListener('touchmove', onMove);
+    overlay.removeEventListener('touchend', onEnd);
+    overlay.removeEventListener('touchcancel', onEnd);
+    if (pullRAF) cancelAnimationFrame(pullRAF);
+    if (spinnerStopTimer) window.clearTimeout(spinnerStopTimer);
+    state.activeTicketPullCleanup = null;
+  };
 }
 
-/* ─────────────── Layout Fixes (iOS Safe Area overrides) ─────────────── */
-function applyLayoutFixes() {
-  document.body.style.paddingBottom = '0px';
-  document.body.style.marginBottom = '0px';
-  document.documentElement.style.paddingBottom = '0px';
-  
-  const bottomNav = document.querySelector('#bottom-nav');
-  if (bottomNav) bottomNav.style.paddingBottom = '0px';
-  
-  document.querySelectorAll('.overlay-active, .ticket-active, [class*="ticket"]').forEach(el => {
-    el.style.paddingBottom = '0px';
-  });
-  
-  const appEl = document.getElementById('app');
-  if (appEl) appEl.style.paddingBottom = '0px';
+/* ─────────────── iOS visual viewport / safe area ─────────────── */
+function syncVisualViewport() {
+  const viewport = window.visualViewport;
+  const height = Math.round(viewport ? viewport.height : window.innerHeight);
+  document.documentElement.style.setProperty('--app-height', `${height}px`);
 }
 
-window.addEventListener('resize', applyLayoutFixes);
+window.addEventListener('resize', syncVisualViewport);
+window.addEventListener('orientationchange', syncVisualViewport);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', syncVisualViewport);
 
 document.body.addEventListener('touchmove', function(e) {
   // Prevent bounce effects on the body itself
@@ -798,7 +789,7 @@ document.body.addEventListener('touchmove', function(e) {
 /* ─────────────── Initialisation ─────────────── */
 
 window.addEventListener('DOMContentLoaded', () => {
-  applyLayoutFixes();
+  syncVisualViewport();
   lucide.createIcons();
 
   // Wire up bottom nav tabs

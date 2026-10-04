@@ -16,6 +16,8 @@
   --yellow-dark: #fec627;
   --green: #3DB64A;
   --green-dark: #2D9A3A;
+  --active-ticket-green: #2e8938;
+  --active-ticket-green-dark: #22732c;
   --badge-green-bg: #D4EDDA;
   --badge-green-tx: #2D6A4F;
   --badge-yellow-bg: #FFF3CD;
@@ -42,7 +44,10 @@
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07), 0 0 1px rgba(0, 0, 0, 0.05);
   --shadow-up: 0 -4px 24px rgba(0, 0, 0, 0.10);
   
-  --safe-area-bottom: 0px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  /* 100vh fallback, dynamic viewport when supported, then the JS visual-viewport value. */
+  --app-height: 100vh;
+  --app-height: 100dvh;
 }
 
 /* ─────────────── Reset ─────────────── */
@@ -55,19 +60,28 @@
 }
 
 html {
-  font-size: 90%;
+  /* A restrained, rem-based 5% increase for the application as a whole. */
+  font-size: 94.5%;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 html,
 body {
-  height: 100%;
+  width: 100%;
+  height: var(--app-height);
+  min-height: var(--app-height);
   margin: 0 !important;
   padding: 0 !important;
   padding-bottom: 0px !important;
   margin-bottom: 0px !important;
   overflow: hidden;
   -webkit-text-size-adjust: none;
-  overscroll-behavior-y: none;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  touch-action: pan-y;
 }
 
 img,
@@ -99,12 +113,15 @@ body {
 #app {
   width: min(100vw, 30rem);
   max-width: 30rem;
-  height: 100dvh;
+  height: var(--app-height);
+  min-height: var(--app-height);
   margin: 0 auto;
   background: var(--bg);
   position: relative;
   overflow: hidden;
-  padding-bottom: 0px !important;
+  padding-bottom: 0 !important;
+  overscroll-behavior: none;
+  touch-action: pan-y;
 }
 
 /* ─────────────── Screens ─────────────── */
@@ -112,9 +129,12 @@ body {
   display: block;
   height: 100%;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior-y: none;
+  touch-action: pan-y;
   padding-top: 0;
-  padding-bottom: 55px;
+  padding-bottom: calc(3.75rem + var(--safe-area-bottom));
 }
 
 .screen.hidden {
@@ -123,19 +143,21 @@ body {
 
 /* ─────────────── Overlays ─────────────── */
 .overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   max-width: 480px;
   margin: 0 auto;
   z-index: 200;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: auto;
   background: white;
   transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
   transform: none;
   opacity: 1;
   visibility: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
+  touch-action: pan-y;
 }
 
 .overlay.hidden {
@@ -146,18 +168,18 @@ body {
 
 /* ─────────────── Bottom Navigation ─────────────── */
 #bottom-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   max-width: 480px;
   margin: 0 auto;
-  height: 55px;
+  height: calc(3.75rem + var(--safe-area-bottom));
   background: var(--surface);
   border-top: 1px solid rgba(0, 0, 0, 0.14);
   display: flex;
-  align-items: center;
-  padding: 0 !important;
+  align-items: flex-start;
+  padding: 0 0 var(--safe-area-bottom) !important;
   z-index: 110;
 }
 
@@ -171,7 +193,7 @@ body {
   color: #9CA3AF;
   font-size: 0.6875rem;
   font-weight: 500;
-  min-height: 2.75rem;
+  min-height: 3.75rem;
   justify-content: center;
 }
 
@@ -352,6 +374,17 @@ body {
   animation-delay: 0s;
 }
 
+/* The white spinner is only used for the active-ticket pull interaction. */
+#ticket-lds-spinner div { animation-duration: 1.1s; }
+#ticket-lds-spinner div:nth-child(1) { animation-delay: -0.9625s; }
+#ticket-lds-spinner div:nth-child(2) { animation-delay: -0.825s; }
+#ticket-lds-spinner div:nth-child(3) { animation-delay: -0.6875s; }
+#ticket-lds-spinner div:nth-child(4) { animation-delay: -0.55s; }
+#ticket-lds-spinner div:nth-child(5) { animation-delay: -0.4125s; }
+#ticket-lds-spinner div:nth-child(6) { animation-delay: -0.275s; }
+#ticket-lds-spinner div:nth-child(7) { animation-delay: -0.1375s; }
+#ticket-lds-spinner div:nth-child(8) { animation-delay: 0s; }
+
 
 @keyframes lds-spinner {
   0% {
@@ -477,6 +510,49 @@ body {
   width: 20px;
   height: 20px;
 }
+
+/* Home intentionally stays about 10% denser than the original layout. */
+#screen-home .home-header-teal {
+  padding-top: calc(max(env(safe-area-inset-top), 1.125rem) + 0.25rem);
+}
+
+#screen-home .home-header__top {
+  height: 2.85rem !important;
+}
+
+#screen-home .home-header__top img {
+  width: 6.2rem !important;
+}
+
+#screen-home .home-header-purple {
+  padding: 0.9rem var(--s4) 0.85rem;
+}
+
+#screen-home .home-header__city-row { margin-bottom: 0.65rem; }
+#screen-home .home-header__city { font-size: 1.07rem; }
+#screen-home .home-header-card {
+  gap: 0.65rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.805rem;
+  min-height: 2.85rem;
+}
+#screen-home .home-header-card img,
+#screen-home .home-header-card .chevron-r { width: 1.1rem !important; height: 1.1rem !important; }
+#screen-home .info-btn { min-width: 2.45rem; min-height: 2.45rem; }
+#screen-home .home-body { padding: 0.65rem 0.85rem; }
+#screen-home .section-title { font-size: 1.04rem; margin-bottom: 0.65rem; }
+#screen-home .search-row { gap: 0.4rem; margin-bottom: 1rem; }
+#screen-home .search-bar { gap: 0.65rem; padding: 0.6rem 0.85rem; }
+#screen-home .search-bar span { font-size: 0.805rem; }
+#screen-home .search-bar i { width: 1.05rem !important; height: 1.05rem !important; }
+#screen-home .icon-btn-circle { width: 2.36rem; height: 2.36rem; }
+#screen-home .icon-btn-circle img { width: 1.5rem !important; height: 1.5rem !important; }
+#screen-home .card-row { gap: 0.65rem; padding: 0.65rem 0.85rem; min-height: 3.1rem; }
+#screen-home .card-row__label,
+#screen-home .card-row__muted { font-size: 0.857rem; }
+#screen-home .card-row img { width: 2.15rem !important; height: 2.15rem !important; }
+#screen-home .section-row + .card-row img { width: 3.1rem !important; height: 3.1rem !important; }
+#screen-home .section-row { margin-bottom: 0.4rem; }
 
 .info-btn {
   color: white;
@@ -658,6 +734,25 @@ body {
 .biglietteria-body {
   padding: var(--s5) var(--s4);
 }
+
+/* Keep the ticket shop compact without changing its component proportions. */
+#screen-biglietteria .biglietteria-header {
+  padding: calc(max(env(safe-area-inset-top), 1.125rem) + 0.6rem) 0.9rem 0.9rem;
+}
+#screen-biglietteria .biglietteria-header .back-btn { min-width: 2.45rem; min-height: 2.45rem; }
+#screen-biglietteria .biglietteria-search input { font-size: 0.8rem; }
+#screen-biglietteria .biglietteria-body { padding: 0.95rem 0.9rem; }
+.popular-tickets-heading {
+  font-size: 0.9rem !important;
+  margin-top: 0;
+  margin-bottom: 0.8rem !important;
+  letter-spacing: 0.01em;
+}
+#screen-biglietteria .buy-card { padding: 0.65rem 0.9rem; margin-bottom: 0.85rem; }
+#screen-biglietteria .buy-card__name { font-size: 0.74rem; }
+#screen-biglietteria .buy-card__sub { font-size: 0.8rem; margin-bottom: 0.65rem; }
+#screen-biglietteria .btn-primary { height: 2.7rem; line-height: 2.7rem; font-size: 0.9rem; }
+#screen-biglietteria .aziende-card { padding: 0.85rem; gap: 0.65rem; }
 
 .buy-card {
   background: white;
@@ -1133,12 +1228,12 @@ body {
 
 /* ─────────────── Overlay Active ─────────────── */
 .overlay-active {
-  background: var(--green);
-  min-height: 100dvh;
-  padding-bottom: 30px;
+  background: var(--active-ticket-green);
+  min-height: var(--app-height);
+  padding-bottom: calc(1.875rem + var(--safe-area-bottom));
   position: relative;
   overflow: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
 }
 
 /* Spinner area - BEHIND the card (z-index lower) */
@@ -1148,7 +1243,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--green);
+  background: var(--active-ticket-green);
   z-index: 1;
   pointer-events: none;
   transition: height 0.25s ease;
@@ -1160,13 +1255,13 @@ body {
   z-index: 10;
   transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
   will-change: transform;
-  background: var(--green);
+  background: var(--active-ticket-green);
 }
 
 .overlay-active .overlay-header {
   position: relative;
   z-index: 11;
-  background: var(--green);
+  background: var(--active-ticket-green);
 }
 
 /* ─────────────── QR & Validation ─────────────── */
@@ -1242,6 +1337,10 @@ body {
 
 .active-ticket-card {
   margin: 0 var(--s4);
+}
+
+.active-ticket-card .active-banner {
+  background: var(--active-ticket-green-dark);
 }
 
 .active-ticket-card #qr-container canvas {
@@ -1340,6 +1439,24 @@ body {
   text-decoration: underline;
   display: inline-block;
   line-height: 1;
+}
+
+.profile-data {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+  color: var(--purple);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.profile-data svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
 }
 
 .profile-qr-btn {

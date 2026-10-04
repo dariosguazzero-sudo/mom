@@ -146,8 +146,8 @@
 
       <!-- Body -->
       <div class="biglietteria-body">
-        <p style="font-weight:700;font-size:1rem;margin-bottom:var(--s4)">
-          Biglietti più venduti nella tua città
+        <p class="popular-tickets-heading" style="font-weight:700;font-size:1rem;margin-bottom:var(--s4)">
+          BIGLIETTI PIÙ VENDUTI NELLA TUA CITTÀ
         </p>
 
         <!-- Buy card -->
@@ -236,7 +236,10 @@
           <div class="profile-avatar"><span>AR</span></div>
           <div>
             <div class="profile-name">Andrea Rossi</div>
-            <a href="#" class="profile-link">I tuoi dati</a>
+            <button type="button" class="profile-data">
+              <i data-lucide="user-round" aria-hidden="true"></i>
+              <span>I tuoi dati</span>
+            </button>
           </div>
           <button class="profile-qr-btn">
             <i data-lucide="qr-code" style="width:36px;height:36px"></i>
